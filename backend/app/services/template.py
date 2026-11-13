@@ -46,6 +46,26 @@ class TemplateService:
         rows.append(entry)
         return entry, []
 
+    def update_entry(self, entry_id: int, values: dict[str, Any]) -> tuple[dict[str, Any] | None, str]:
+        """编辑模板草稿：选择器、映射等任一环节变化，都会让挂在该模板下的评审结论失效。"""
+        entry = store.find(MODULE, entry_id)
+        if entry is None:
+            return None, f"网页模板 {entry_id} 不存在或已归档"
+        editable = ["入口地址", "列表选择器", "详情选择器", "分页规则", "字段映射", "数据格式", "模板版本"]
+        changed = [field for field in editable if field in values and values[field] != entry.get(field)]
+        for field in editable:
+            if field in values:
+                entry[field] = values[field]
+        if changed:
+            # 延迟导入：评审服务启动时要读模板，反向引用放在方法里避免循环依赖
+            from app.services.review import review_service
+
+            affected = review_service.invalidate_for_template(
+                entry_id, f"模板草稿的 {'、'.join(changed)} 被修改，原评审结论失效"
+            )
+            entry["abnormal"] = bool(affected)
+        return entry, ""
+
     def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
         entry = store.find(MODULE, entry_id)
         if entry is None:

@@ -58,6 +58,15 @@ def run_action(entry_id: int, payload: EntryPayload) -> ActionResult:
     return ActionResult(ok=True, message=message, entry=entry)
 
 
+@router.patch("/{entry_id}", response_model=ActionResult)
+def update_entry(entry_id: int, payload: EntryPayload) -> ActionResult:
+    """编辑模板草稿（选择器、映射等）：关联发布评审卡的旧结论会被同步作废。"""
+    entry, message = service.update_entry(entry_id, payload.values)
+    if entry is None:
+        return ActionResult(ok=False, message=message)
+    return ActionResult(ok=True, message="模板草稿已保存，关联评审卡的原结论已失效", entry=entry)
+
+
 @router.get("/export")
 def export_entries() -> dict[str, Any]:
     """导出抽取模板清单：返回当前过滤条件下的全量数据。"""

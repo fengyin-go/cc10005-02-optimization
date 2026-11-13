@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { request } from '@/api/client'
 
@@ -142,6 +143,7 @@ export default function TemplateView() {
                     {action}
                   </button>
                 ))}
+                <Link className="link" to="/review">发布评审卡</Link>
               </td>
             </tr>
           ))}
